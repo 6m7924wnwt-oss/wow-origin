@@ -33,7 +33,7 @@
 
 ### Cloudflare Workers（推荐）
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Anomi-oo/wow-origin)
+[![部署到 Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Anomi-oo/wow-origin)
 
 点击按钮并授权即可部署。后续可在生成仓库的 **Actions → Sync upstream → Run workflow** 中手动同步上游，Cloudflare 会自动重新部署；同步不会修改 Cloudflare 环境变量和账号数据。
 
@@ -102,8 +102,8 @@ Aduoer 中填写同一地址，并使用页面生成的 Token
 | `ADMIN_MANAGEMENT_PASSWORD` | 空 | 网页管理员密钥；Docker / Node 环境变量或 Cloudflare 运行时 Secret |
 | `PORT` | `3000` | 服务端口 |
 | `HOST` | `0.0.0.0` | 监听地址 |
-| `LOG_LEVEL` | `info` | 日志级别 |
-| `CORS_ALLOW_ORIGIN` | `*` | 允许访问的来源 |
+| `日志级别` | `信息` | 日志级别 |
+| `CORS允许的源` | `*` | 允许访问的来源 |
 | `LX_SOURCE_URL` | 空 | Node、Docker、桌面版的主洛雪源 |
 | `LX_SOURCE_URL0`…`LX_SOURCE_URL9` | 空 | 备用洛雪源，按编号尝试 |
 | `CF_LX_SOURCE_URL` | 空 | Cloudflare 构建时使用的全局洛雪源 |
@@ -153,11 +153,11 @@ Rewrite 的单文件页面位于 `rewrite/ui/index.html`，QuanX 和 Loon 配置
 本项目基于 [Aduoer-Music/aduoer-wow-template](https://github.com/Aduoer-Music/aduoer-wow-template)，并参考了以下项目：
 
 - [tlyanyu/multiPlatformMusicApi](https://github.com/tlyanyu/multiPlatformMusicApi)
-- [neteasecloudmusicapienhanced/api-enhanced](https://github.com/neteasecloudmusicapienhanced/api-enhanced)
+- [网易云音乐API增强版/api-enhanced](https://github.com/neteasecloudmusicapienhanced/api-enhanced)
 - [jsososo/QQMusicApi](https://github.com/jsososo/QQMusicApi)
 - [lyswhut/lx-music-desktop](https://github.com/lyswhut/lx-music-desktop)
 - [ytmusicapi](https://github.com/sigma67/ytmusicapi)
 
 ## 许可与免责声明
 
-项目采用 [MIT License](LICENSE)，仅供学习与交流。使用者应遵守所在地法律、平台服务条款及内容版权要求，并自行承担使用后果。
+项目采用 [MIT License](LICENSE)，仅供学习与交流。使用者应遵守所在地法律、平台服务条款及内容版权要求，并自行承担使用后果。   
