@@ -8,6 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      CF_LX_SOURCE_URL: ${{ secrets.CF_LX_SOURCE_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
