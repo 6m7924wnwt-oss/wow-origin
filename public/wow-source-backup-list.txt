@@ -1,0 +1,146 @@
+================================================================
+        WOW 音乐站 · 可用洛雪音源 备份清单
+        整理日期：2026-11-06
+================================================================
+
+【一、站点信息】
+
+新站  https://wow2.dfew52asa.cc.cd/      Worker: wow-origin-2
+老站  https://dfew52asa.cc.cd/           Worker: wow-origin
+当前线上音源：裤佬SVIP音源（已实测可播放，QQ 320k）
+
+注意：老站和新站互不影响，换新站音源不会动老站。
+
+
+【二、四个可用音源（已全部备份到 GitHub，随时可下载）】
+
+备份仓库路径：6m7924wnwt-oss/wow-origin  →  public/ 目录
+
+--------------------------------------------------------
+1. 裤佬SVIP音源  ★推荐 / 当前线上在用
+--------------------------------------------------------
+文件名   kulao-source.js
+大小     27,292 字节
+校验值   b265c405a979f6ec（SHA256 前16位，与线上运行版本完全一致）
+直连地址 https://raw.githubusercontent.com/6m7924wnwt-oss/wow-origin/main/public/kulao-source.js
+
+支持平台 QQ音乐 / 网易云 / 酷我 / 酷狗 / 咪咕
+取流方式 转发接口（http://mcp.nianxinxz.com/share/ceshi/tx.php?...）
+实测结果 2026-11-06 实测通过：
+         · QQ 晴天（0039MnYb0qxYhV）→ 成功
+         · QQ 请求无损 flac → 自动降级为 320k（正常，账号无会员）
+         · 网易云 347230 → 成功
+         · 实际下载 10,792,943 字节，audio/mpeg，320kbps 44.1kHz 立体声
+状态     可用（你本人已确认「可以播放」）
+
+--------------------------------------------------------
+2. Wow 音源（老站长期使用）
+--------------------------------------------------------
+文件名   wow-source.js
+大小     4,003 字节
+校验值   4387ba9677246883
+直连地址 https://raw.githubusercontent.com/6m7924wnwt-oss/wow-origin/main/public/wow-source.js
+
+支持平台 QQ音乐 / 网易云
+来源     Telegram @isJielin
+状态     老站 dfew52asa.cc.cd 长期在用，稳定
+
+--------------------------------------------------------
+3. 五源合一 v1.6.0（含网易云等多平台）
+--------------------------------------------------------
+文件名   five-source-v16.js
+大小     217,254 字节
+校验值   58fd208e6f8df9dd
+直连地址 https://raw.githubusercontent.com/6m7924wnwt-oss/wow-origin/main/public/five-source-v16.js
+
+状态     曾在新站实测可播放
+
+--------------------------------------------------------
+4. Huibq 音源（2026-11-06 复查接口仍活）
+--------------------------------------------------------
+文件名   huibq-source.js
+大小     2,727 字节
+校验值   a9adeb456690b523
+直连地址 https://raw.githubusercontent.com/6m7924wnwt-oss/wow-origin/main/public/huibq-source.js
+
+接口     https://lxmusicapi.onrender.com/url/<平台>/<歌曲ID>/<音质>
+         Header：X-Request-Key: share-v3
+支持平台 QQ音乐 / 网易云
+实测结果 2026-11-06 本机复查：
+         · 返回 code:0 success，给出真 QQ 320k 地址
+         · 实下 300KB，audio/mpeg，ID3 头正常 → 是真音频
+风险     该后端此前对 Cloudflare 机房 IP 拦截过一次（部署后取流全 422）
+         所以它在「本机能用」，在 CF 上不一定能用，换之前要实测
+
+
+【三、备份文件校验结果（2026-11-06）】
+
+以上 4 个文件已从 GitHub 重新下载核对，全部完整：
+  kulao-source.js      27,292 字节  b265c405a979f6ec   ✓ 与线上一致
+  wow-source.js         4,003 字节  4387ba9677246883   ✓
+  five-source-v16.js  217,254 字节  58fd208e6f8df9dd   ✓
+  huibq-source.js       2,727 字节  a9adeb456690b523   ✓
+并且 4 个全部通过 wow 构建脚本的两条强制校验
+（有 request 监听、有 inited 发送、头注释在最前）→ 可直接用于部署
+
+
+【四、怎么把某个音源换回线上（手把手）】
+
+方法A：Cloudflare 后台（不推荐，Cloudflare 版只认一个全局源）
+  1. 打开 Cloudflare 控制台 → Workers & Pages → wow-origin-2
+  2. Settings → Variables → 找到 CF_LX_SOURCE_URL
+  3. 把值改成上面任意一个「直连地址」
+  4. 保存后重新 Deploy（必须重新部署才会生效）
+
+方法B：告诉我，我帮你换（改完会实测，不行立刻回滚）
+  · 换完后用这条命令验证是否真的出流：
+    https://wow2.dfew52asa.cc.cd/v1/track/url?id=0039MnYb0qxYhV&source=qq&level=exhigh
+  · 只有返回真实音频 URL 才算成功，返回 422 就是失败
+
+
+【五、已验证「不能用」的音源（别重复试）】
+
+以下几个是这段时间逐个实测淘汰的，装上去只会白费功夫：
+
+  · 星海音乐源           人机验证拦截
+  · Hei Music-223        面板返回 403/422
+  · a芽音源              取流 422
+  · 六音 v1.2.1          报「当前客户端不支持」
+  · 幻音 v3              music-dl.sayqz.com 域名解析失败
+  · HYW 公益版           103.79.184.97 连接重置 + 卡密
+  · ikun v6/v22          api.ikunshare.com 域名已不存在
+  · Hello World          musicserver.haitangw.cc 报 APP_UPGRADE_REQUIRED
+  · 长青 SVIP            yinyue.haitangw.net 服务器在，但 QQ 接口 404
+  · 全豆要 qdy           music.nxinxz.com 404 + 卡密
+  · 杰翔聚合             上游挂掉 + 签名校验
+  · 聚合juhe             api.music.lerd.dpdns.org 返回 Cloudflare error 1027
+  · 墨澜 v2.3.5          QQ 两个后端全停（海堂停服 / baimusic 要 ekey），仅网易云可用
+  · 独家音源 v7          服务端签名盐 + 指纹，机房 IP 必拒
+  · 小熙-修复版          接口 2026-11-02 已关闭（返回「接口已关闭」）
+  · 聆澜 v8.9.3          本机可用，Cloudflare 出口全 422
+  · MusicFree 六平台订阅 格式不是洛雪，wow 导入不了
+
+
+【六、音质说明（重要）】
+
+你的 QQ 账号没有会员，所以：
+  · 官方通道最高只能 320k（HQ 高品质）
+  · 请求「无损 SQ」时，源会自动降级成 320k，播放器仍显示你选的档位
+  · 想要真无损（FLAC），唯一办法是登录一个有会员的 QQ 账号到 wow 上
+
+实测证据：裤佬源下载到的文件是 10,792,943 字节
+         audio/mpeg  MPEG 1 layer 3  320kbps  44.1kHz  JointStereo
+         即标准 320k MP3，不是无损。
+
+
+【七、恢复/回滚原则】
+
+1. 任何换源操作前，先确认当前线上版本号（Cloudflare 后台可见）
+2. 换完必须实测取流；失败就回滚到「裤佬SVIP音源」
+3. 未经你同意，我不会擅自更换线上音源
+4. 老站 wow-origin 和 danmu-api 不动
+
+================================================================
+本清单对应的 4 个音源文件均已备份在 GitHub：
+https://github.com/6m7924wnwt-oss/wow-origin/tree/main/public
+================================================================
