@@ -1,4 +1,3 @@
-/* WOW COMPAT PATCH: lx 通过沙箱参数 globalThis2 取用，适配 wow-origin 内置音源 */
 /*!
  * @name         星海音乐源
  * @description  GDAPI | 聚合 | ChKSz API | 全平台支持 24bit FLAC，网易、酷狗、QQ 最高支持母带
@@ -11,7 +10,10 @@
  * @license      仅供学习交流，请支持正版
  */
 
-const { EVENT_NAMES, request, on, send, env } = globalThis2.lx;
+
+// WOW compat: 通过 arguments[0] 取沙箱对象（打包改名不影响 arguments），拿不到则回退真实全局
+var __WOW_SCOPE = (typeof arguments !== 'undefined' && arguments && arguments[0] && arguments[0].lx) ? arguments[0] : globalThis;
+const { EVENT_NAMES, request, on, send, env } = __WOW_SCOPE.lx;
 
 // ==================== 用户配置区域 ====================
 const KW_DECRYPT_PROXY = {
@@ -198,7 +200,7 @@ function safeParseBody(body) {
     }
     try {
         if (isBuffer(body)) {
-            if (globalThis2.lx?.utils?.buffer?.bufToString) body = globalThis2.lx.utils.buffer.bufToString(body, 'utf-8');
+            if (__WOW_SCOPE.lx?.utils?.buffer?.bufToString) body = __WOW_SCOPE.lx.utils.buffer.bufToString(body, 'utf-8');
             else if (typeof Buffer !== 'undefined') body = Buffer.from(body).toString('utf-8');
             else body = String(body);
         }
@@ -212,9 +214,9 @@ function safeParseBody(body) {
 
 function safeBase64Encode(str) {
     try {
-        if (globalThis2.lx?.utils?.buffer?.from) {
-            const buf = globalThis2.lx.utils.buffer.from(str, 'utf-8');
-            return globalThis2.lx.utils.buffer.bufToString(buf, 'base64');
+        if (__WOW_SCOPE.lx?.utils?.buffer?.from) {
+            const buf = __WOW_SCOPE.lx.utils.buffer.from(str, 'utf-8');
+            return __WOW_SCOPE.lx.utils.buffer.bufToString(buf, 'base64');
         }
         if (typeof Buffer !== 'undefined') return Buffer.from(str, 'utf-8').toString('base64');
         return btoa(unescape(encodeURIComponent(str)));
