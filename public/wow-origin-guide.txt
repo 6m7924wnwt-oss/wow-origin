@@ -1,0 +1,259 @@
+================================================================
+        WOW 老站（wow-origin）部署与使用教程
+        整理日期：2026-11-06
+        适用站点：https://dfew52asa.cc.cd/
+================================================================
+
+【一、这个项目是什么】
+
+项目名：Aduoer Wow Origin
+仓库地址：https://github.com/Anomi-oo/wow-origin
+你的仓库：https://github.com/6m7924wnwt-oss/wow-origin
+
+它是一个「Wow v1 音源服务」，作用是把 QQ 音乐、网易云音乐
+（部分版本还带 YouTube Music）的搜索、歌单、榜单、歌词、播放地址，
+封装成一个标准接口，让你在第三方音乐 App（如 Aduoer）里
+用上自己的账号听歌。
+
+一句话：它是「你自己搭的音乐中转站」，不是 App 本身。
+
+支持的部署方式有 5 种：
+  1. Cloudflare Workers  ← 你在用的这种，免费、无需服务器
+  2. EdgeOne Makers（腾讯云）
+  3. Docker（自己的服务器 / NAS）
+  4. 桌面版（本地直接跑）
+  5. Quantumult X / Loon 重写（最简单，但没有洛雪源）
+
+
+【二、你的老站现状（2026-11-06 实际核查）】
+
+域名      https://dfew52asa.cc.cd/
+Worker    wow-origin
+路由      dfew52asa.cc.cd/*  →  wow-origin
+状态      运行中，首页正常
+
+内置洛雪音源（从线上打包代码中读出来的真实值）：
+  名称      五源合一
+  版本      1.6.0
+  作者      研子1号
+  指纹      digest 58fd208e6f8df9dd40c571b2d33e926b74bee88328f6abe1e0e9d5a864ca1fd1
+  启用状态  true
+
+和你 GitHub 备份里的 five-source-v16.js 完全一致，
+说明老站跑的就是那个文件，随时可以复现。
+
+注意：老站（wow-origin）和新站（wow-origin-2）是两套完全独立的东西，
+改一个不会影响另一个。
+
+
+【三、日常怎么用】
+
+3.1 打开站点
+  浏览器访问：https://dfew52asa.cc.cd/
+  注意：Cloudflare 版的 workers.dev 默认地址在国内常 503，
+  所以一定要用自定义域名访问，不要用 xxx.workers.dev。
+
+3.2 配置音乐账号
+  访问：https://dfew52asa.cc.cd/login
+  在里面添加你的 QQ 音乐 / 网易云账号。
+  添加成功后会生成一个 api_access_key（访问密钥），
+  这个密钥就是第三方 App 连你站点的「钥匙」。
+
+3.3 在 App 里接入（Wow v1 格式）
+  Base URL：https://dfew52asa.cc.cd/v1
+  访问密钥：就是上一步生成的那串 api_access_key
+  平台：qq（QQ音乐）或 wy（网易云）
+
+3.4 管理员模式（可选）
+  给 Worker 配置一个叫 ADMIN_MANAGEMENT_PASSWORD 的环境变量，
+  网页右上角就会出现「管理员模式」，输入这个密码后
+  可以查看和管理全部账号。
+  没配置 → 这个功能关闭，谁都进不去。
+  刷新或关闭页面后需要重新输入。
+
+  Cloudflare 填写位置：
+  Worker → Settings → Variables and Secrets → 添加同名 Secret
+  → 保存后重新部署才生效。
+
+
+【四、怎么换洛雪音源（最重要的一节）】
+
+4.1 先理解机制
+  Cloudflare 版「只支持一个全局洛雪源」，而且这个源是在
+  【构建时】下载并编译进 Worker 的，不是运行时读配置。
+  所以：
+    · 改环境变量 CF_LX_SOURCE_URL 之后，必须【重新部署】才生效
+    · 只改变量不重新部署 = 等于没改
+
+4.2 换源步骤（推荐用命令行，最稳）
+  在项目目录里执行（把 <地址> 换成你要用的音源直连地址）：
+
+    CI=true \
+    CLOUDFLARE_API_TOKEN=<你的CF Token> \
+    CLOUDFLARE_ACCOUNT_ID=059e27465995dbe03999a49c4e26cbe1 \
+    CF_LX_SOURCE_URL=<地址> \
+    npx --yes wrangler@4 deploy
+
+  构建日志里会出现这一行，就是成功的凭据：
+    [custom build] [cloudflare] 洛雪全局源: <音源名> (<digest前12位>)
+
+  如果日志里没这行 → 说明音源没被下载成功，部署了也是空的。
+
+4.3 可用的音源地址（都已在你的 GitHub 备份）
+  裤佬SVIP音源（当前新站在用）
+  https://raw.githubusercontent.com/6m7924wnwt-oss/wow-origin/main/public/kulao-source.js
+
+  Wow 音源（老站历史上长期用）
+  https://raw.githubusercontent.com/6m7924wnwt-oss/wow-origin/main/public/wow-source.js
+
+  五源合一 v1.6.0（老站现在用的就是这个）
+  https://raw.githubusercontent.com/6m7924wnwt-oss/wow-origin/main/public/five-source-v16.js
+
+  Huibq
+  https://raw.githubusercontent.com/6m7924wnwt-oss/wow-origin/main/public/huibq-source.js
+
+4.4 换完必须验证（不验证等于没换）
+  取流测试命令（把 ID 换成任意一首歌）：
+
+    curl "https://dfew52asa.cc.cd/v1/track/url?id=0039MnYb0qxYhV&source=qq&level=exhigh&_=$(date +%s%N)" \
+      -H "Authorization: Bearer <你的api_access_key>"
+
+  判断标准：
+    · 返回一个 http:// 开头的音频地址 → 成功
+    · 返回 422 / no audio → 音源没通，别以为部署好了
+    · 加 &_= 纳秒参数是为了绕过约 30 分钟的缓存
+
+4.5 什么样的音源会失败（踩过的坑）
+  ① 要面板授权、卡密、人机验证、联网校验的 → Cloudflare 出口被拦
+  ② 混淆过头、依赖 window/document/XMLHttpRequest 的 → 沙箱里直接崩
+  ③ 上游服务器拦机房 IP 的 → 本机能用、CF 上 422
+  只有「纯直连接口 + 不校验环境」的源才稳。
+
+
+【五、万一站点挂了，从零重新部署】
+
+5.1 最简单：一键部署按钮
+  打开 https://github.com/Anomi-oo/wow-origin
+  点 README 里的「Deploy to Cloudflare」按钮
+  → 授权你的 Cloudflare 账号
+  → 在部署页面的「构建变量」里填：
+       CF_LX_SOURCE_URL = 你要用的音源地址
+  → 点部署，几分钟后完成
+
+  部署完它会生成一个新仓库，之后可以在那个仓库的
+  Actions → Sync upstream → Run workflow 手动同步上游，
+  Cloudflare 会自动重新部署（不会动你的环境变量和账号数据）。
+
+5.2 命令行部署
+  需要 Node.js 22 或更高版本，然后：
+
+    git clone https://github.com/6m7924wnwt-oss/wow-origin.git
+    cd wow-origin
+    npm ci
+    npm run cloudflare:deploy
+
+  前提是环境里已经设好：
+    CLOUDFLARE_API_TOKEN=<你的CF Token>
+    CLOUDFLARE_ACCOUNT_ID=059e27465995dbe03999a49c4e26cbe1
+    CF_LX_SOURCE_URL=<音源地址>
+
+5.3 绑回域名
+  部署完到 Cloudflare 控制台：
+    Workers & Pages → 选中 wow-origin → Settings → Domains & Routes
+    → 添加路由 dfew52asa.cc.cd/* → 保存
+  或者在 DNS 里给 dfew52asa.cc.cd 开一条 A 记录指向 192.0.2.1（已代理）。
+
+
+【六、环境变量速查表】
+
+  ADMIN_MANAGEMENT_PASSWORD   管理员密钥，空=关闭管理员模式
+  PORT                        端口，默认 3000（CF 版无用）
+  HOST                        监听地址，默认 0.0.0.0（CF 版无用）
+  LOG_LEVEL                   日志级别，默认 info
+  CORS_ALLOW_ORIGIN           允许来源，默认 *
+  LX_SOURCE_URL               Node/Docker/桌面版的主洛雪源
+  LX_SOURCE_URL0 ~ 9          备用洛雪源，按编号依次尝试
+  CF_LX_SOURCE_URL            ★ Cloudflare 构建时用的全局洛雪源
+  EDGEONE_LX_SOURCE_URL       EdgeOne 构建时用的洛雪源
+
+  重要区分：
+    CF_LX_SOURCE_URL 是【构建变量】，改了必须重新部署
+    ADMIN_MANAGEMENT_PASSWORD 是【运行时 Secret】，改了重新部署也生效
+
+
+【七、项目结构（想知道某个文件夹干什么就看这里）】
+
+  cloudflare/       Cloudflare 版专用（worker.ts、lx-manager.ts、构建脚本）
+  cloud-functions/  EdgeOne 版函数
+  core/             核心逻辑
+  platforms/        各音乐平台适配
+  public/           ★ 你的音源存档都在这里（kulao/wow/five-source/huibq）
+  rewrite/          Quantumult X / Loon 重写方案
+  scripts/          辅助脚本
+  src/              服务端源码（账号、登录、歌单、榜单等）
+  sources/          洛雪音源相关
+  tests/            测试
+  types/            TypeScript 类型
+  wrangler.jsonc    Cloudflare Worker 配置
+  build.sh          构建入口
+  Dockerfile        Docker 构建
+  docker-compose.yml
+
+
+【八、常见问题】
+
+Q1：网页能打开，但放歌提示「当前歌曲无法播放」
+A：主体是音频取流失败。按顺序查：
+   1. 洛雪源是不是真的编进 Worker 了（看构建日志那行 digest）
+   2. 账号配置里「洛雪源开关」在服务端是不是真的 true
+      （注意：服务端是 null 时，网页也可能显示「已开启」，这是历史坑）
+   3. 用第四节 4.4 的命令实测取流，看是 422 还是空地址
+
+Q2：明明选了「无损 SQ / 臻音」，实际只有 320k
+A：账号没有会员时，官方通道最高就只有 320k。
+   虽然播放器界面显示你选的档位，服务端已静默降级。
+   验证办法：把返回的音频下载下来看参数，
+   如果是 audio/mpeg + 320kbps，那就是 HQ 不是无损。
+   想要真无损只能登录有会员的 QQ 账号。
+
+Q3：改完音源没变化
+A：90% 是没重新部署。CF 版音源是构建期编译进去的，不是热更新。
+
+Q4：workers.dev 地址打不开
+A：国内访问 xxx.workers.dev 常被 503，必须用自定义域名。
+
+Q5：老站和新站会不会互相影响？
+A：不会。路由是分开的：
+     dfew52asa.cc.cd/*      → wow-origin（老站）
+     wow2.dfew52asa.cc.cd/* → wow-origin-2（新站）
+   各自内置各自的音源，互不干扰。
+
+
+【九、安全提醒】
+
+1. 不要公开 api_access_key、Cookie、.env、私有音源地址
+2. 洛雪源会被当作「受信任代码」在服务端执行，
+   只配置你确认过的脚本
+3. 管理员密码建议不要用弱口令；不用时可以删掉这个变量关掉功能
+4. 如果密钥曾经泄露到公开仓库，要立刻重置
+
+
+【十、一页速查卡】
+
+  老站地址      https://dfew52asa.cc.cd/
+  账号配置      https://dfew52asa.cc.cd/login
+  客户端接入    Base URL = https://dfew52asa.cc.cd/v1
+  Worker 名     wow-origin
+  当前音源      五源合一 v1.6.0（digest 58fd208e6f8df9dd...）
+  换源变量      CF_LX_SOURCE_URL（改完必须重新部署）
+  验证命令      curl ".../v1/track/url?id=0039MnYb0qxYhV&source=qq&level=exhigh&_=$(date +%s%N)"
+  音源备份      https://github.com/6m7924wnwt-oss/wow-origin/tree/main/public
+  ⚠️ 不要动    danmu-api、wow-origin-2（新站另行维护）
+
+================================================================
+本教程依据以下真实来源整理：
+  · 项目官方 README（github.com/Anomi-oo/wow-origin）
+  · 你的线上 Worker wow-origin 打包内容（bundledLxSource 字段）
+  · 你的 Cloudflare 路由表
+  · 这段时间的实机测试记录
+================================================================
