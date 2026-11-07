@@ -1,6 +1,6 @@
 # Aduoer Wow Origin
 
-面向 [Aduoer](https://github.com/Aduoer-Music) 的 QQ 音乐、网易云音乐、YouTube Music 统一 Wow v1 音源服务，支持搜索、歌单、榜单、歌曲、歌手、专辑、歌词和播放地址。
+面向 [Aduoer](https://github.com/Aduoer-Music) 的 QQ 音乐、网易云音乐、酷狗音乐、YouTube Music 统一 Wow v1 音源服务，支持搜索、歌单、榜单、歌曲、歌手、专辑、歌词和播放地址。
 
 本项目与 Aduoer App 无任何关联，仅参考官方 Wow 模板和 SDK，提供开源实现解决方案，让用户可以在其他 App 上使用自己的订阅服务  
 使用本项目前，确保你拥有对应平台的使用权限，包括但不限于，账号、订阅、已购歌曲等，否则将无法正常使用
@@ -62,7 +62,7 @@ Cloudflare 版只支持一个全局洛雪源。脚本会在构建时下载并编
 | --- | --- | --- |
 | 安装命令 | `npm install --include=dev` | 需要 devDependencies 中的 esbuild |
 | 构建命令 | `npm run edgeone:build` | 生成 `cloud-functions/[[default]].js` |
-| 输出目录 | `public` | 登录页等静态资源 |
+| 输出目录 | `public` | 登录页等静态资源（`styles.css` 由 `npm run build:css` 从 `web/styles.css` 编译，已提交） |
 | Node 版本 | `22.11.0` | 云函数运行时 |
 
 3. 推送 `main` 即触发构建与部署，构建日志和函数日志都可以在控制台查看。
@@ -188,7 +188,7 @@ Aduoer 中填写同一地址，并使用页面生成的 Token
 
 ### 账号管理
 
-配置 `ADMIN_MANAGEMENT_PASSWORD` 后，网页右上角会显示“管理员模式”。输入密钥后可查看和管理全部账号，刷新或关闭页面后需重新验证；也可点击退出。未配置或值为空时无法进入。桌面版默认具有全部账号管理能力，无需管理员密码。
+配置 `ADMIN_MANAGEMENT_PASSWORD` 后，网页顶部导航右侧会显示“管理员模式”。输入密钥后可查看和管理全部账号，刷新或关闭页面后需重新验证；也可点击退出。未配置或值为空时无法进入。桌面版默认具有全部账号管理能力，无需管理员密码。
 
 Docker 在 `.env` 中填写此变量并重建容器（`docker compose up -d --force-recreate`）。Cloudflare 在 Worker 的 **Settings → Variables and Secrets** 中添加同名 Secret 并部署，或运行 `npx wrangler secret put ADMIN_MANAGEMENT_PASSWORD`。这是运行时密钥，不是洛雪源构建变量；本地 Wrangler 开发可写入 `.dev.vars`。
 

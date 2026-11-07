@@ -128,3 +128,19 @@ test('EdgeOne account store falls back to an atomic JSON file without Blob', asy
   const reopened = new EdgeOneAccountStore({ accounts: saved.accounts, filePath });
   expect(reopened.list()).toHaveLength(1);
 });
+
+test('EdgeOne ignores legacy Kugou cache and removes it from subsequent account writes', async () => {
+  const blob = new MemoryBlobStore();
+  const state = { userId: '1', likedPlaylistId: '42' };
+  blob.values.set('accounts/kugou', JSON.stringify({
+    version: 1, account: { platform: 'kugou', api_access_key: 'kugou', cookie: 'userid=1; token=old', kugouState: state }
+  }));
+  const second = await EdgeOneAccountStore.open({ blob });
+  expect(second.list()[0]).not.toHaveProperty('kugouState');
+  second.update('kugou', { cookie: 'userid=1; token=new' });
+  await second.flush();
+  const account = (await EdgeOneAccountStore.open({ blob })).list()[0];
+  expect(account).toMatchObject({ cookie: 'userid=1; token=new' });
+  expect(account).not.toHaveProperty('kugouState');
+  expect(JSON.parse(blob.values.get('accounts/kugou')!).account).not.toHaveProperty('kugouState');
+});
