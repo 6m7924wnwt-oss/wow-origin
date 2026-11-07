@@ -1,7 +1,10 @@
 name: Sync upstream
 
+# 每天把上游最新代码同步到本仓库，同时保留 public/ 里我们自己加的音源
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 18 * * *' # 每天 02:00（北京时间）同步一次
 
 permissions:
   contents: write
@@ -19,15 +22,49 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
-      - name: Replace repository files with the latest upstream version
+      - name: 同步上游代码并保回本地音源
         env:
           DESTINATION_BRANCH: ${{ github.event.repository.default_branch }}
           UPSTREAM_URL: https://github.com/Anomi-oo/wow-origin.git
         shell: bash
         run: |
           set -euo pipefail
+          PREV=$(git rev-parse HEAD)
+
           git fetch --no-tags --depth=1 "$UPSTREAM_URL" main
+
+          BEFORE=$(git ls-tree -r --name-only "$PREV" -- public | grep -c '\.js$' || true)
+
+          # 先用上游最新版本整树覆盖
           git read-tree --reset -u FETCH_HEAD
+
+          # 再把「上游没有、我们独有」的文件全部从旧提交取回来
+          # 覆盖 public/*.js 自加音源、指南 txt、deploy.yml 等，避免被整树替换删掉
+          RESTORED=0
+          while IFS= read -r -d '' p; do
+            if ! git cat-file -e "FETCH_HEAD:$p" 2>/dev/null; then
+              git checkout "$PREV" -- "$p"
+              RESTORED=$((RESTORED+1))
+            fi
+          done < <(git ls-tree -r -z --name-only "$PREV")
+
+          # 强制保护：这些文件即使上游也有同名文件，也必须保留我们自己的版本
+          # 尤其是本文件，否则同步一次就把自己换回上游那个会删音源的旧版
+          for p in .github/workflows/sync-upstream.yml .github/workflows/deploy.yml; do
+            if git cat-file -e "$PREV:$p" 2>/dev/null; then
+              git checkout "$PREV" -- "$p"
+              RESTORED=$((RESTORED+1))
+            fi
+          done
+
+          AFTER=$(git ls-files public | grep -c '\.js$' || true)
+          echo "保留本地独有文件 ${RESTORED} 个；public/ 音源 ${BEFORE} → ${AFTER}" >> "$GITHUB_STEP_SUMMARY"
+
+          # 兜底：音源数量一旦变少就中止，绝不推送
+          if [ "$AFTER" -lt "$BEFORE" ]; then
+            echo "::error::public/ 音源数量减少（${BEFORE} → ${AFTER}），已中止同步"
+            exit 1
+          fi
 
           if git diff --cached --quiet; then
             echo "Already up to date." >> "$GITHUB_STEP_SUMMARY"
@@ -36,6 +73,6 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: sync upstream"
+          git commit -m "chore: sync upstream (keep local sources)"
           git push origin "HEAD:$DESTINATION_BRANCH"
-          echo "Synced with Anomi-oo/wow-origin main." >> "$GITHUB_STEP_SUMMARY"
+          echo "已同步 Anomi-oo/wow-origin main，本地音源已保留。" >> "$GITHUB_STEP_SUMMARY"
